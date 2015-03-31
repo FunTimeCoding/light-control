@@ -1,4 +1,6 @@
-# LightControl
+# Light Control
+
+This is the Java GUI software of the Light Control project. It works in conjunction with the Microcontroller part `light-control-uc` ([link](https://github.com/FunTimeCoding/light-control-uc)).
 
 Install dependencies using maven.
 
@@ -8,7 +10,6 @@ mvn clean install
 ```
 
 Run the program.
-
 
 ```sh
 java -jar target/light-control-1.0-SNAPSHOT.jar

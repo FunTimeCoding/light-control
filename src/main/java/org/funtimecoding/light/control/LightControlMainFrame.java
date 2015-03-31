@@ -1,12 +1,11 @@
 package org.funtimecoding.light.control;
 
 import com.jamierf.rxtx.RXTXLoader;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import javax.swing.JSlider;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * @author shiin
@@ -22,7 +21,7 @@ public class LightControlMainFrame extends javax.swing.JFrame {
         try {
             RXTXLoader.load();
         } catch (IOException ex) {
-            System.err.println("Fatal error.");
+            System.err.println("Fatal error: " + ex.getMessage());
         }
 
         final LightControl control = new LightControl();
@@ -40,46 +39,54 @@ public class LightControlMainFrame extends javax.swing.JFrame {
             System.out.println("connected");
             //control.connect(deviceName);
         } catch (Exception ex) {
-            System.err.println("Fatal exception.");
+            System.err.println("Fatal exception: " + ex.getMessage());
         }
 
-        ChangeListener listener = new ChangeListener() {
+        MouseListener mouse = new MouseListener() {
             @Override
-            public void stateChanged(ChangeEvent event) {
+            public void mousePressed(MouseEvent event) {
+                //Mouse Pressed Functionality add here
+            }
 
-                JSlider slider = (JSlider) event.getSource();
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                // TODO Auto-generated method stub
+            }
 
-                if (slider.getValueIsAdjusting()) {
+            @Override
+            public void mouseEntered(MouseEvent event) {
+                // TODO Auto-generated method stub
+            }
 
-                    int red = redSlider.getValue();
-                    int green = greenSlider.getValue();
-                    int blue = blueSlider.getValue();
-                    String msg = "C";
-                    msg += " ";
-                    msg += red;
-                    msg += " ";
-                    msg += green;
-                    msg += " ";
-                    msg += blue;
-                    System.out.println(msg);
+            @Override
+            public void mouseExited(MouseEvent event) {
+                // TODO Auto-generated method stub
+            }
 
-                    try {
-                        OutputStream out = control.getOut();
-                        int len = msg.length();
+            @Override
+            public void mouseReleased(MouseEvent event) {
+                int red = redSlider.getValue();
+                int green = greenSlider.getValue();
+                int blue = blueSlider.getValue();
+                String msg = "C " + red + " " + green + " " + blue + "\n";
+                System.out.print(msg);
 
-                        for (int i = 0; i < len; i++) {
-                            out.write(msg.charAt(i));
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error in stateChanged: " + e.getMessage());
+                try {
+                    OutputStream out = control.getOut();
+                    int len = msg.length();
+
+                    for (int i = 0; i < len; i++) {
+                        out.write(msg.charAt(i));
                     }
+                } catch (Exception e) {
+                    System.err.println("Error in stateChanged: " + e.getMessage());
                 }
             }
         };
 
-        redSlider.addChangeListener(listener);
-        greenSlider.addChangeListener(listener);
-        blueSlider.addChangeListener(listener);
+        redSlider.addMouseListener(mouse);
+        greenSlider.addMouseListener(mouse);
+        blueSlider.addMouseListener(mouse);
 
         InputStream in = control.getIn();
         if (in != null) {
