@@ -21,6 +21,7 @@ public class LightControlMainFrame extends javax.swing.JFrame {
      */
     public LightControlMainFrame() {
         initComponents();
+        jComboBox1.setRenderer(new DropdownRenderer(this));
 
         try {
             RXTXLoader.load();
@@ -184,7 +185,7 @@ public class LightControlMainFrame extends javax.swing.JFrame {
         System.out.println("Dropdown loaded.");
     }
 
-    private int[] ladeFarbeFürNamen(String name) {
+    public int[] ladeFarbeFürNamen(String name) {
         int[] werte = new int[3];
 
         Connection c = null;
@@ -413,7 +414,7 @@ public class LightControlMainFrame extends javax.swing.JFrame {
             c.close();
         } catch (Exception e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
+            JOptionPane.showMessageDialog(null, "Name bereits vergeben!");
         }
         this.loadDropdown(true);
 
