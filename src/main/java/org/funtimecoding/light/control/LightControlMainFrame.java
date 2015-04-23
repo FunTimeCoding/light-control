@@ -27,7 +27,7 @@ public class LightControlMainFrame extends javax.swing.JFrame {
     public LightControlMainFrame() {
         initComponents();
         jComboBox1.setRenderer(new DropdownRenderer(this));
-        
+
         //ConnectDB
         String url = "jdbc:mysql://kevin-sauter.de:3306/lightControl";
         String user = "lightControl";
@@ -58,7 +58,9 @@ public class LightControlMainFrame extends javax.swing.JFrame {
         //    System.exit(1);
         //}
         try {
-            //control.connect("/dev/tty.uart-A7FF4A1BBE0D0922");
+            if(true){
+                control.connect("/dev/tty.uart-A7FF4A1BBE0D0922");
+            }
             System.out.println("connected");
             //control.connect(deviceName);
         } catch (Exception ex) {
@@ -111,18 +113,21 @@ public class LightControlMainFrame extends javax.swing.JFrame {
         greenSlider.addMouseListener(mouse);
         blueSlider.addMouseListener(mouse);
 
-        //InputStream in = control.getIn();
-        //if (in != null) {
-        //    (new Thread(new SerialReader(in, redSlider, greenSlider, blueSlider))).start();
-        //} else {
-        //    System.err.println("Device not be found.");
-        //    System.exit(1);
-        //}
+        if (true) {
+            InputStream in = control.getIn();
+            if (in != null) {
+                (new Thread(new SerialReader(in, redSlider, greenSlider, blueSlider))).start();
+            } else {
+                System.err.println("Device not be found.");
+                System.exit(1);
+            }
+        }
+
         //loadDatabase();
         loadDropdown(false);
-        
+
         Timer timer = new Timer();
-        timer.schedule( new CommandPoller(connection, redSlider, greenSlider, blueSlider, jComboBox1), 0, 1000);  
+        timer.schedule(new CommandPoller(connection, redSlider, greenSlider, blueSlider, jComboBox1), 0, 1000);
     }
 
     private void loadDatabase() {
@@ -231,14 +236,14 @@ public class LightControlMainFrame extends javax.swing.JFrame {
                 System.exit(0);
             }
         }
-        
+
         String daten = LightControlMainFrame.dropdownItems.get(name);
         String[] daten2 = daten.split(";");
-        
+
         werte[0] = Integer.parseInt(daten2[0]);
         werte[1] = Integer.parseInt(daten2[1]);
         werte[2] = Integer.parseInt(daten2[2]);
-        
+
         return werte;
     }
 
