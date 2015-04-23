@@ -18,8 +18,8 @@ import javax.swing.JSlider;
  *
  * @author K. Sauter
  */
-public class CommandPoller extends TimerTask{
-    
+public class CommandPoller extends TimerTask {
+
     private Connection c;
     private final JSlider redSlider;
     private final JSlider greenSlider;
@@ -33,7 +33,7 @@ public class CommandPoller extends TimerTask{
         this.blueSlider = blueSlider;
         this.dropdown = dropdown;
     }
-    
+
     @Override
     public void run() {
         Statement stmt = null;
@@ -42,11 +42,23 @@ public class CommandPoller extends TimerTask{
             ResultSet rs = stmt.executeQuery("SELECT * FROM rgb_control WHERE status = 0 ORDER BY id DESC LIMIT 1");
             while (rs.next()) {
                 //bissl updaten :D
-                String daten = LightControlMainFrame.dropdownItems.get(rs.getString("requestName"));
-                String[] daten2 = daten.split(";");
-                int red = Integer.parseInt(daten2[0]);
-                int green = Integer.parseInt(daten2[1]);
-                int blue = Integer.parseInt(daten2[2]);
+                String request = rs.getString("requestName");
+                int red;
+                int green;
+                int blue;
+                if (request.indexOf(";;") == -1) {
+                    String daten = LightControlMainFrame.dropdownItems.get(rs.getString("requestName"));
+                    String[] daten2 = daten.split(";");
+                    red = Integer.parseInt(daten2[0]);
+                    green = Integer.parseInt(daten2[1]);
+                    blue = Integer.parseInt(daten2[2]);
+                } else {
+                    String daten2[] = request.split(";;");
+                    red = Integer.parseInt(daten2[0]);
+                    green = Integer.parseInt(daten2[1]);
+                    blue = Integer.parseInt(daten2[2]);
+                }
+
                 this.redSlider.setValue(red);
                 this.greenSlider.setValue(green);
                 this.blueSlider.setValue(blue);
@@ -70,7 +82,7 @@ public class CommandPoller extends TimerTask{
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
         }
-        
+
     }
-    
+
 }
