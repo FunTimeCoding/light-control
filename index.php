@@ -19,8 +19,8 @@ mysql_select_db("lightControl");
 
 if(isset($_POST['farbe'])){
     mysql_query("INSERT INTO `lightControl`.`rgb_control` (`id`, `requestName`, `status`) VALUES (NULL, '" . $_POST['auswahl'] . "', '0');");
-    echo "Gespeichert!";
-    die();
+    //echo "Gespeichert!";
+    //die();
 }
 
 function textfarbe($r, $g, $b){

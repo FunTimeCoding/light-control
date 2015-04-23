@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Timer;
 import javax.swing.JOptionPane;
 
 /**
@@ -15,6 +18,8 @@ import javax.swing.JOptionPane;
 public class LightControlMainFrame extends javax.swing.JFrame {
 
     public static LightControl control;
+    private static Connection connection;
+    public static HashMap<String, String> dropdownItems = new HashMap<String, String>();
 
     /**
      * Creates new form LightControlMainFrame
@@ -22,6 +27,18 @@ public class LightControlMainFrame extends javax.swing.JFrame {
     public LightControlMainFrame() {
         initComponents();
         jComboBox1.setRenderer(new DropdownRenderer(this));
+        
+        //ConnectDB
+        String url = "jdbc:mysql://kevin-sauter.de:3306/lightControl";
+        String user = "lightControl";
+        String password = "toor01";
+
+        try {
+            LightControlMainFrame.connection = DriverManager.getConnection(url, user, password);
+            System.out.println("Opened database successfully");
+        } catch (SQLException ex) {
+            System.out.println("Opened database FAILED!");
+        }
 
         try {
             RXTXLoader.load();
@@ -41,7 +58,7 @@ public class LightControlMainFrame extends javax.swing.JFrame {
         //    System.exit(1);
         //}
         try {
-            control.connect("/dev/tty.uart-A7FF4A1BBE0D0922");
+            //control.connect("/dev/tty.uart-A7FF4A1BBE0D0922");
             System.out.println("connected");
             //control.connect(deviceName);
         } catch (Exception ex) {
@@ -94,15 +111,18 @@ public class LightControlMainFrame extends javax.swing.JFrame {
         greenSlider.addMouseListener(mouse);
         blueSlider.addMouseListener(mouse);
 
-        InputStream in = control.getIn();
-        if (in != null) {
-            (new Thread(new SerialReader(in, redSlider, greenSlider, blueSlider))).start();
-        } else {
-            System.err.println("Device not be found.");
-            System.exit(1);
-        }
-        loadDatabase();
+        //InputStream in = control.getIn();
+        //if (in != null) {
+        //    (new Thread(new SerialReader(in, redSlider, greenSlider, blueSlider))).start();
+        //} else {
+        //    System.err.println("Device not be found.");
+        //    System.exit(1);
+        //}
+        //loadDatabase();
         loadDropdown(false);
+        
+        Timer timer = new Timer();
+        timer.schedule( new CommandPoller(connection, redSlider, greenSlider, blueSlider, jComboBox1), 0, 1000);  
     }
 
     private void loadDatabase() {
@@ -157,15 +177,14 @@ public class LightControlMainFrame extends javax.swing.JFrame {
     private void loadDropdown(boolean reload) {
 
         if (reload) {
+            LightControlMainFrame.dropdownItems.clear();
             jComboBox1.removeAllItems();
         }
 
         Connection c = null;
         Statement stmt = null;
         try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:lightControl.db");
-            c.setAutoCommit(false);
+            c = LightControlMainFrame.connection;
             System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
@@ -173,11 +192,14 @@ public class LightControlMainFrame extends javax.swing.JFrame {
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String name = rs.getString("name");
+                String red = rs.getString("red");
+                String green = rs.getString("green");
+                String blue = rs.getString("blue");
+                LightControlMainFrame.dropdownItems.put(name, red + ";" + green + ";" + blue);
                 jComboBox1.addItem(name);
             }
             rs.close();
             stmt.close();
-            c.close();
         } catch (Exception e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
@@ -190,27 +212,33 @@ public class LightControlMainFrame extends javax.swing.JFrame {
 
         Connection c = null;
         Statement stmt = null;
-        try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:lightControl.db");
-            c.setAutoCommit(false);
-            System.out.println("Opened database successfully");
+        if (false) {
+            try {
+                c = LightControlMainFrame.connection;
+                System.out.println("Opened database successfully");
 
-            stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM rgb_farben WHERE name = '" + name + "';");
-            while (rs.next()) {
-                werte[0] = rs.getInt("red");
-                werte[1] = rs.getInt("green");
-                werte[2] = rs.getInt("blue");
+                stmt = c.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT * FROM rgb_farben WHERE name = '" + name + "';");
+                while (rs.next()) {
+                    werte[0] = rs.getInt("red");
+                    werte[1] = rs.getInt("green");
+                    werte[2] = rs.getInt("blue");
+                }
+                rs.close();
+                stmt.close();
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(0);
             }
-            rs.close();
-            stmt.close();
-            c.close();
-        } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
         }
-
+        
+        String daten = LightControlMainFrame.dropdownItems.get(name);
+        String[] daten2 = daten.split(";");
+        
+        werte[0] = Integer.parseInt(daten2[0]);
+        werte[1] = Integer.parseInt(daten2[1]);
+        werte[2] = Integer.parseInt(daten2[2]);
+        
         return werte;
     }
 
@@ -377,16 +405,12 @@ public class LightControlMainFrame extends javax.swing.JFrame {
         Connection c = null;
         Statement stmt = null;
         try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:lightControl.db");
-            c.setAutoCommit(true);
-            System.out.println("Opened database successfully");
+            c = LightControlMainFrame.connection;
 
             stmt = c.createStatement();
             String sql = "DELETE FROM rgb_farben WHERE name = '" + jComboBox1.getSelectedItem().toString() + "';";
             stmt.executeUpdate(sql);
             stmt.close();
-            c.close();
         } catch (Exception e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
@@ -401,17 +425,13 @@ public class LightControlMainFrame extends javax.swing.JFrame {
         Connection c = null;
         Statement stmt = null;
         try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:lightControl.db");
-            c.setAutoCommit(true);
-            System.out.println("Opened database successfully");
+            c = LightControlMainFrame.connection;
 
             stmt = c.createStatement();
             String sql = "INSERT INTO rgb_farben (name, red, green, blue) "
                     + "VALUES ('" + name + "', " + redSlider.getValue() + ", " + greenSlider.getValue() + ", " + blueSlider.getValue() + ");";
             stmt.executeUpdate(sql);
             stmt.close();
-            c.close();
         } catch (Exception e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             JOptionPane.showMessageDialog(null, "Name bereits vergeben!");
